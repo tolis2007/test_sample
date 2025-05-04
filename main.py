@@ -1,49 +1,32 @@
-from flask import Flask
-import threading
+import os
 import time
-from datetime import datetime
 import requests
+from datetime import datetime
 
-# Your keywords
-KEYWORDS = ["κόμιξ", "ποπάυ", "μεγάλο μίκυ"]
+# Get Telegram credentials from environment variables
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
-# Telegram bot config
-CHAT_ID = "6488198943"
-TOKEN = "7783096712:AAHg-dJQyVMCH5HBnPmHbr37NIUjaxhVKU4"
-
-# Flask app for Render
-app = Flask(__name__)
-
-# Simulated scraping function
-def scrape_loop():
-    while True:
-        # Replace with your Vendora + Metabook scraping logic
-        print(f"🔍 Running at {datetime.now().strftime('%H:%M:%S')}")
-
-        # Dummy result for testing
-        title = "Μεγάλο Μίκυ Νο 123"
-        price = "€3"
-        link = "https://example.com"
-
-        if any(k in title.lower() for k in KEYWORDS):
-            send_telegram(f"{datetime.now()}\n{title}\n{price}\n{link}")
-
-        time.sleep(60)  # run every minute
-
-def send_telegram(message):
-    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": message}
+def send_telegram_notification(title, link, price):
+    message = f"🕒 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n📚 {title}\n💰 {price}\n🔗 {link}"
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": message,
+        "parse_mode": "HTML"
+    }
     try:
         requests.post(url, data=payload)
     except Exception as e:
-        print(f"Telegram error: {e}")
+        print(f"Failed to send Telegram message: {e}")
 
-@app.route("/")
-def home():
-    return "Comic scraper is running."
+def main():
+    print(f"🔍 Running at {datetime.now().strftime('%H:%M:%S')}")
+    # Example data (replace with real scraping logic)
+    send_telegram_notification("Test Comic", "https://example.com", "5€")
 
-# Start scraper in background thread
-threading.Thread(target=scrape_loop, daemon=True).start()
-
+# Loop forever, checking every 60 seconds
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    while True:
+        main()
+        time.sleep(60)
